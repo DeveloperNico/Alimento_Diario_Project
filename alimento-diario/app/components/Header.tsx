@@ -10,7 +10,7 @@ export default function Header() {
 
     const links = [
         { href: "/", label: "Início", id: "home" },
-        { href: "/cronograma", label: "Cronograma", id: "cronograma" },
+        { href: "/pages/cronograma", label: "Cronograma", id: "cronograma" },
         { href: "/comunidade", label: "Comunidade", id: "comunidade" },
     ];
 
@@ -28,7 +28,7 @@ export default function Header() {
     };
 
     return (
-        <header className="relative bg-white overflow-hidden shadow-sm">
+        <header className="sticky top-0 z-50 relative bg-white overflow-hidden shadow-sm">
             <div className="absolute -top-20 -right-42 w-[800px] h-[300px] bg-[radial-gradient(circle_at_center,_#9fddf5_0%,_transparent_70%)] opacity-40 blur-3xl pointer-events-none" />
             <div className="flex items-center justify-between px-5">
                 <div className="z-1 flex items-center gap-3">

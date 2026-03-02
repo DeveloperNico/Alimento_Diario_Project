@@ -1,8 +1,9 @@
 import Header from "../components/Header";
 import VersiculoDoDia from "../components/VersiculoDoDia";
 import ProgressoLeitura from "../components/ProgressoLeitura";
+import LeituraDeHoje from "../components/LeituraDeHoje";
 
-export default function Page() {
+export default function Home() {
     return (
         <main>
             <Header />
@@ -14,6 +15,7 @@ export default function Page() {
 
             <VersiculoDoDia />
             <ProgressoLeitura />
+            <LeituraDeHoje />
         </main>
     );
 }
