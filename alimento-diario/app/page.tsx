@@ -1,11 +1,9 @@
-import Header from "./components/Header";
-import VersiculoDoDia from "./components/VersiculoDoDia";
+import Home from "./pages/Home";
 
 export default function Page() {
   return (
     <main>
-      <Header />
-      <VersiculoDoDia />
+      <Home />
     </main>
   );
 }
