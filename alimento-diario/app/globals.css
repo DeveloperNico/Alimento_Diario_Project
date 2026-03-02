@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+@theme {
+  --font-family-poppins: var(--font-poppins);
+}
+
+@layer base {
+  body {
+    @apply antialiased;
+  }
+}
