@@ -1,8 +1,8 @@
-'use client';
+﻿'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Calendar, BookOpen } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, BookOpen, Upload, X, AlertCircle } from "lucide-react";
 
 type LeituraData = {
     at: string;
@@ -11,35 +11,64 @@ type LeituraData = {
     proverbios: string;
 };
 
+type CronogramaData = {
+    personalizado: boolean;
+    leituras: Record<number, LeituraData>;
+    uploadedAt?: string;
+    tipoArquivo?: string;
+};
+
 export default function CalendarioLeitura() {
-    const [mesAtual, setMesAtual] = useState(2); // Março (0-based)
+    const [mesAtual, setMesAtual] = useState(2); // MarÃ§o (0-based)
     const [anoAtual, setAnoAtual] = useState(2026);
+    const [cronograma, setCronograma] = useState<CronogramaData | null>(null);
+    const [uploading, setUploading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     const meses = [
-        'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+        'Janeiro', 'Fevereiro', 'MarÃ§o', 'Abril', 'Maio', 'Junho',
         'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
     ];
 
-    // Dados mockados de leituras por dia - com tipo explícito
-    const leiturasPorDia: Record<number, LeituraData> = {
-        1: { at: "Gênesis 1-2", nt: "Mateus 1", salmo: "Salmo 1", proverbios: "Provérbios 1" },
-        2: { at: "Gênesis 3-4", nt: "Mateus 2", salmo: "Salmo 2", proverbios: "Provérbios 2" },
-        3: { at: "Gênesis 5-6", nt: "Mateus 3", salmo: "Salmo 3", proverbios: "Provérbios 3" },
-        4: { at: "Gênesis 7-8", nt: "Mateus 4", salmo: "Salmo 4", proverbios: "Provérbios 4" },
-        5: { at: "Gênesis 9-10", nt: "Mateus 5", salmo: "Salmo 5", proverbios: "Provérbios 5" },
-        6: { at: "Gênesis 11-12", nt: "Mateus 6", salmo: "Salmo 6", proverbios: "Provérbios 6" },
-        7: { at: "Gênesis 13-14", nt: "Mateus 7", salmo: "Salmo 7", proverbios: "Provérbios 7" },
-        8: { at: "Gênesis 15-16", nt: "Mateus 8", salmo: "Salmo 8", proverbios: "Provérbios 8" },
-        9: { at: "Gênesis 17-18", nt: "Mateus 9", salmo: "Salmo 9", proverbios: "Provérbios 9" },
-        10: { at: "Gênesis 19-20", nt: "Mateus 10", salmo: "Salmo 10", proverbios: "Provérbios 10" },
-        11: { at: "Gênesis 21-22", nt: "Mateus 11", salmo: "Salmo 11", proverbios: "Provérbios 11" },
-        12: { at: "Gênesis 23-24", nt: "Mateus 12", salmo: "Salmo 12", proverbios: "Provérbios 12" },
-        13: { at: "Gênesis 25-26", nt: "Mateus 13", salmo: "Salmo 13", proverbios: "Provérbios 13" },
-        14: { at: "Gênesis 27-28", nt: "Mateus 14", salmo: "Salmo 14", proverbios: "Provérbios 14" },
-        15: { at: "Gênesis 29-30", nt: "Mateus 15", salmo: "Salmo 15", proverbios: "Provérbios 15" },
-        16: { at: "Gênesis 31-32", nt: "Mateus 16", salmo: "Salmo 16", proverbios: "Provérbios 16" },
+    useEffect(() => {
+        carregarCronograma();
+    }, []);
+
+    const carregarCronograma = async () => {
+        try {
+            setLoading(true);
+            const res = await fetch('/api/cronograma');
+            const data = await res.json();
+            setCronograma(data);
+        } catch (error) {
+            console.error('Erro ao carregar cronograma:', error);
+        } finally {
+            setLoading(false);
+        }
     };
-    // Calcular dias do mês
+
+    
+
+    const removerCronogramaPersonalizado = async () => {
+        if (!confirm('Tem certeza que deseja remover o cronograma personalizado?')) return;
+
+        try {
+            const res = await fetch('/api/cronograma', {
+                method: 'DELETE',
+            });
+
+            const result = await res.json();
+            if (result.sucesso) {
+                alert('Cronograma personalizado removido!');
+                carregarCronograma();
+            }
+        } catch (error) {
+            console.error('Erro ao remover cronograma:', error);
+            alert('Erro ao remover cronograma personalizado');
+        }
+    };
+
+    // Calcular dias do mÃªs
     const diasNoMes = new Date(anoAtual, mesAtual + 1, 0).getDate();
     const primeiroDia = new Date(anoAtual, mesAtual, 1).getDay();
 
@@ -66,7 +95,7 @@ export default function CalendarioLeitura() {
     };
 
     const getDiaStatus = (dia: number) => {
-        // Simulando dias lidos (baseado no progresso do usuário: 15 dias)
+        // TODO: Integrar com API de progresso do usuÃ¡rio
         const diasLidos = 15;
         const diaAtual = 16;
 
@@ -84,41 +113,104 @@ export default function CalendarioLeitura() {
         }
     };
 
+    // Loading state
+    if (loading) {
+        return (
+            <div className="flex justify-center py-5">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0082b5] mx-auto mb-4"></div>
+                    <p>Carregando cronograma...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Error state
+    if (!cronograma) {
+        return (
+            <div className="flex justify-center py-5">
+                <div className="text-center text-red-600">
+                    <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+                    <p>Erro ao carregar cronograma</p>
+                    <button
+                        onClick={carregarCronograma}
+                        className="mt-2 px-4 py-2 bg-[#0082b5] text-white rounded-lg"
+                    >
+                        Tentar novamente
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    const leiturasPorDia = cronograma.leituras;
+
     return (
         <div className="flex justify-center py-5">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
-                className="relative overflow-hidden rounded-2xl p-6 sm:p-8 w-full max-w-8xl"
+                className="relative overflow-hidden rounded-2xl border border-[#006eb3] bg-white p-6 sm:p-8 w-full max-w-6xl shadow-lg"
             >
-                {/* Header do Calendário */}
+                {/* Header com upload */}
                 <div className="mb-6">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
                             <Calendar className="h-8 w-8 text-[#0082b5]" />
-                            <h2 className="text-2xl font-bold">Cronograma de Leitura</h2>
+                            <div>
+                                <h2 className="text-2xl font-bold">Cronograma de Leitura</h2>
+                                {cronograma.personalizado && (
+                                    <p className="text-sm text-green-600">
+                                        ðŸ“„ Cronograma personalizado ({cronograma.tipoArquivo})
+                                    </p>
+                                )}
+                            </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={mesAnterior}
-                                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                            >
-                                <ChevronLeft className="h-5 w-5" />
-                            </button>
+                        <div className="flex gap-2">
+                            {cronograma.personalizado && (
+                                <button
+                                    onClick={removerCronogramaPersonalizado}
+                                    className="flex items-center gap-2 px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors text-sm"
+                                >
+                                    <X className="h-4 w-4" />
+                                    Remover
+                                </button>
+                            )}
 
-                            <h3 className="text-xl font-semibold min-w-[200px] text-center">
-                                {meses[mesAtual]} {anoAtual}
-                            </h3>
-
-                            <button
-                                onClick={proximoMes}
-                                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                            >
-                                <ChevronRight className="h-5 w-5" />
-                            </button>
+                            <label className="flex items-center gap-2 px-4 py-2 bg-[#0082b5] text-white rounded-lg hover:bg-[#006ea3] transition-colors cursor-pointer">
+                                <Upload className="h-4 w-4" />
+                                {uploading ? 'Processando...' : 'Upload'}
+                                <input
+                                    type="file"
+                                    accept=".pdf,.txt"
+                                    disabled={uploading}
+                                    className="hidden"
+                                />
+                            </label>
                         </div>
+                    </div>
+
+                    {/* NavegaÃ§Ã£o do mÃªs */}
+                    <div className="flex items-center justify-center gap-2 mb-4">
+                        <button
+                            onClick={mesAnterior}
+                            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                        >
+                            <ChevronLeft className="h-5 w-5" />
+                        </button>
+
+                        <h3 className="text-xl font-semibold min-w-[200px] text-center">
+                            {meses[mesAtual]} {anoAtual}
+                        </h3>
+
+                        <button
+                            onClick={proximoMes}
+                            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                        >
+                            <ChevronRight className="h-5 w-5" />
+                        </button>
                     </div>
 
                     {/* Seletor de meses */}
@@ -128,8 +220,8 @@ export default function CalendarioLeitura() {
                                 key={mes}
                                 onClick={() => selecionarMes(index)}
                                 className={`px-3 py-1 text-xs rounded-full transition-colors ${index === mesAtual
-                                        ? 'bg-[#0082b5] text-white'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    ? 'bg-[#0082b5] text-white'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                     }`}
                             >
                                 {mes.substring(0, 3)}
@@ -138,21 +230,21 @@ export default function CalendarioLeitura() {
                     </div>
                 </div>
 
-                {/* Calendário */}
+                {/* CalendÃ¡rio */}
                 <div className="grid grid-cols-7 gap-2">
-                    {/* Cabeçalho dos dias da semana */}
-                    {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(dia => (
+                    {/* CabeÃ§alho dos dias da semana */}
+                    {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'SÃ¡b'].map(dia => (
                         <div key={dia} className="p-2 text-center font-semibold text-gray-600 text-sm">
                             {dia}
                         </div>
                     ))}
 
-                    {/* Dias vazios no início */}
+                    {/* Dias vazios no inÃ­cio */}
                     {Array.from({ length: primeiroDia }).map((_, index) => (
                         <div key={`empty-${index}`} className="p-2"></div>
                     ))}
 
-                    {/* Dias do mês */}
+                    {/* Dias do mÃªs */}
                     {Array.from({ length: diasNoMes }).map((_, index) => {
                         const dia = index + 1;
                         const status = getDiaStatus(dia);
@@ -163,6 +255,7 @@ export default function CalendarioLeitura() {
                                 key={dia}
                                 whileHover={{ scale: 1.05 }}
                                 className={`p-2 rounded-lg border-2 cursor-pointer transition-all ${getStatusColor(status)}`}
+                                title={leitura ? `AT: ${leitura.at}\nNT: ${leitura.nt}\n${leitura.salmo}\n${leitura.proverbios}` : `Dia ${dia}`}
                             >
                                 <div className="text-center">
                                     <div className="font-bold text-sm mb-1">{dia}</div>
@@ -174,7 +267,7 @@ export default function CalendarioLeitura() {
                                                 <span className="truncate">{leitura.at}</span>
                                             </div>
                                             <div className="text-[10px] opacity-75">
-                                                {leitura.nt} • {leitura.salmo}
+                                                {leitura.nt} â€¢ {leitura.salmo}
                                             </div>
                                         </div>
                                     )}
@@ -203,6 +296,13 @@ export default function CalendarioLeitura() {
                         <span>Futuro</span>
                     </div>
                 </div>
+
+                {/* InformaÃ§Ãµes adicionais */}
+                {cronograma.personalizado && cronograma.uploadedAt && (
+                    <div className="mt-4 text-xs text-gray-500 text-center">
+                        Cronograma carregado em: {new Date(cronograma.uploadedAt).toLocaleDateString('pt-BR')}
+                    </div>
+                )}
             </motion.div>
         </div>
     );
