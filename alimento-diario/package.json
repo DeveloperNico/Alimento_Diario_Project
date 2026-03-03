@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "autoprefixer": "^10.4.27",
+    "bcryptjs": "^3.0.3",
     "framer-motion": "^12.34.3",
     "lucide": "^0.576.0",
     "lucide-react": "^0.576.0",

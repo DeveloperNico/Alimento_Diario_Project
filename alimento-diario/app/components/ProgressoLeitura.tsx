@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from "framer-motion";
 import { CircleCheck, Calendar, BookOpen } from "lucide-react";
+import { useAuth } from '../context/AuthContext';
 
 type Progresso = {
     diasLidos: number;
@@ -10,16 +11,20 @@ type Progresso = {
     diasRestantes: number;
     percentual: number;
     totalDias: number;
+    diasLidosEspecificos: number[];
 };
 
 export default function ProgressoLeitura() {
     const [progresso, setProgresso] = useState<Progresso | null>(null);
     const [loading, setLoading] = useState(true);
+    const { user } = useAuth();
 
     useEffect(() => {
         async function fetchProgresso() {
+            if (!user) return;
+            
             try {
-                const res = await fetch('/api/progresso');
+                const res = await fetch(`/api/progresso?userId=${user.id}`);
                 const data = await res.json();
                 setProgresso(data);
             } catch (error) {
@@ -30,18 +35,25 @@ export default function ProgressoLeitura() {
         }
 
         fetchProgresso();
-    }, []);
+    }, [user]);
 
     const marcarDiaLido = async () => {
+        if (!user) return;
+        
         try {
             const res = await fetch('/api/progresso/marcar-dia', {
                 method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-user-id': user.id 
+                },
+                body: JSON.stringify({ userId: user.id }),
             });
             const data = await res.json();
             
             if (data.sucesso) {
                 // Recarregar progresso
-                const resProgresso = await fetch('/api/progresso');
+                const resProgresso = await fetch(`/api/progresso?userId=${user.id}`);
                 const novoProgresso = await resProgresso.json();
                 setProgresso(novoProgresso);
             }
@@ -49,6 +61,14 @@ export default function ProgressoLeitura() {
             console.error('Erro ao marcar dia:', error);
         }
     };
+
+    if (!user) {
+        return (
+            <div className="flex justify-center py-5">
+                <div className="text-center">Faça login para ver seu progresso</div>
+            </div>
+        );
+    }
 
     if (loading) return (
         <div className="flex justify-center py-5">
