@@ -1,13 +1,17 @@
 ﻿'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Calendar, BookOpen } from "lucide-react";
 import { plano2026, LeituraDia } from '@/data/plano';
+import { useAuth } from '@/app/context/AuthContext';
+import { useProgresso } from '@/app/context/ProgressoContext';
 
 export default function CalendarioLeitura() {
     const [mesAtual, setMesAtual] = useState(2); // Março
     const [anoAtual, setAnoAtual] = useState(2026);
+    const { user } = useAuth();
+    const { diasLidosEspecificos, marcarDiaComoLido } = useProgresso();
 
     const meses = [
         'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -35,10 +39,6 @@ export default function CalendarioLeitura() {
         }
     };
 
-    const selecionarMes = (mes: number) => {
-        setMesAtual(mes);
-    };
-
     const calcularDiaDoAno = (dia: number, mes: number, ano: number) => {
         const data = new Date(ano, mes, dia);
         const inicioAno = new Date(ano, 0, 1);
@@ -54,12 +54,13 @@ export default function CalendarioLeitura() {
             hoje.getFullYear()
         );
 
-        const diasLidos = Math.floor(diaAtualDoAno * 0.85);
-
-        if (diaDoAno < diaAtualDoAno) {
-            return diaDoAno <= diasLidos ? 'lido' : 'perdido';
+        // Verificar se o dia foi lido especificamente
+        if (diasLidosEspecificos.includes(diaDoAno)) {
+            return 'lido';
         }
+
         if (diaDoAno === diaAtualDoAno) return 'hoje';
+        if (diaDoAno < diaAtualDoAno) return 'atrasado';
         return 'futuro';
     };
 
@@ -67,10 +68,35 @@ export default function CalendarioLeitura() {
         switch (status) {
             case 'lido': return 'bg-green-100 border-green-500 text-green-800';
             case 'hoje': return 'bg-blue-100 border-blue-500 text-blue-800 ring-2 ring-blue-300';
-            case 'perdido': return 'bg-red-100 border-red-500 text-red-800';
+            case 'atrasado': return 'bg-red-100 border-red-500 text-red-800';
             default: return 'bg-gray-50 border-gray-200 text-gray-600';
         }
     };
+
+    const handleMarcarDia = async (diaDoAno: number) => {
+        if (!user) return;
+        await marcarDiaComoLido(diaDoAno);
+    };
+
+    const podeMarcarComoLido = (status: string) => {
+        return status === 'hoje' || status === 'atrasado';
+    };
+
+    if (!user) {
+        return (
+            <div className="flex justify-center py-5">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                    className="relative overflow-hidden rounded-2xl bg-white p-6 sm:p-8 w-full max-w-8xl text-center"
+                >
+                    <h3 className="text-xl font-semibold mb-4">Calendário de Leitura</h3>
+                    <p className="text-gray-600">Faça login para ver seu progresso</p>
+                </motion.div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex justify-center py-5">
@@ -124,10 +150,13 @@ export default function CalendarioLeitura() {
                             <motion.div
                                 key={dia}
                                 whileHover={{ scale: 1.05 }}
-                                className={`p-2 rounded-lg border-2 cursor-pointer transition-all min-h-[85px] ${getStatusColor(status)}`}
+                                onClick={() => podeMarcarComoLido(status) && handleMarcarDia(diaDoAno)}
+                                className={`p-2 rounded-lg border-2 transition-all min-h-[85px] ${getStatusColor(status)} ${
+                                    podeMarcarComoLido(status) ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
+                                }`}
                                 title={
                                     leitura
-                                        ? `Dia ${diaDoAno}\nLeitura: ${leitura.leitura}`
+                                        ? `Dia ${diaDoAno}\nLeitura: ${leitura.leitura}\n${podeMarcarComoLido(status) ? 'Clique para marcar como lido' : ''}`
                                         : `Dia ${diaDoAno} - Sem leitura`
                                 }
                             >
@@ -151,6 +180,10 @@ export default function CalendarioLeitura() {
                                         <div className="text-[9px] text-gray-400">
                                             N/A
                                         </div>
+                                    )}
+
+                                    {status === 'lido' && (
+                                        <div className="text-xs">✓</div>
                                     )}
                                 </div>
                             </motion.div>
@@ -176,6 +209,10 @@ export default function CalendarioLeitura() {
                         <div className="w-3 h-3 rounded bg-gray-50 border border-gray-200" />
                         <span>Futuro</span>
                     </div>
+                </div>
+
+                <div className="mt-4 text-center text-xs text-gray-600">
+                    Clique nos dias atrasados ou no dia de hoje para marcar como lido
                 </div>
             </motion.div>
         </div>

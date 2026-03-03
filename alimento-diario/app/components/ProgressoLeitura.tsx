@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { motion } from "framer-motion";
 import { CircleCheck, Calendar, BookOpen } from "lucide-react";
 import { useAuth } from '../context/AuthContext';
+import { useProgresso } from '../context/ProgressoContext';
 
 type Progresso = {
     diasLidos: number;
@@ -18,48 +19,42 @@ export default function ProgressoLeitura() {
     const [progresso, setProgresso] = useState<Progresso | null>(null);
     const [loading, setLoading] = useState(true);
     const { user } = useAuth();
+    const { marcarDiaComoLido, diasLidosEspecificos } = useProgresso();
 
-    useEffect(() => {
-        async function fetchProgresso() {
-            if (!user) return;
-            
-            try {
-                const res = await fetch(`/api/progresso?userId=${user.id}`);
-                const data = await res.json();
-                setProgresso(data);
-            } catch (error) {
-                console.error('Erro ao buscar progresso:', error);
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        fetchProgresso();
-    }, [user]);
-
-    const marcarDiaLido = async () => {
+    // Função para buscar progresso
+    const fetchProgresso = async () => {
         if (!user) return;
         
         try {
-            const res = await fetch('/api/progresso/marcar-dia', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'x-user-id': user.id 
-                },
-                body: JSON.stringify({ userId: user.id }),
-            });
+            const res = await fetch(`/api/progresso?userId=${user.id}`);
             const data = await res.json();
-            
-            if (data.sucesso) {
-                // Recarregar progresso
-                const resProgresso = await fetch(`/api/progresso?userId=${user.id}`);
-                const novoProgresso = await resProgresso.json();
-                setProgresso(novoProgresso);
-            }
+            setProgresso(data);
         } catch (error) {
-            console.error('Erro ao marcar dia:', error);
+            console.error('Erro ao buscar progresso:', error);
+        } finally {
+            setLoading(false);
         }
+    };
+
+    // Buscar progresso inicial
+    useEffect(() => {
+        fetchProgresso();
+    }, [user]);
+
+    // Reagir às mudanças no diasLidosEspecificos do contexto
+    useEffect(() => {
+        if (user && diasLidosEspecificos.length >= 0) {
+            fetchProgresso();
+        }
+    }, [diasLidosEspecificos, user]);
+
+    const handleMarcarDiaLido = async () => {
+        await marcarDiaComoLido(); // A atualização acontecerá automaticamente via useEffect acima
+    };
+
+    const isDiaAtualJaLido = () => {
+        if (!progresso) return false;
+        return progresso.diasLidosEspecificos.includes(progresso.diaAtual);
     };
 
     if (!user) {
@@ -147,10 +142,15 @@ export default function ProgressoLeitura() {
 
                 {/* Botão para marcar dia como lido */}
                 <button
-                    onClick={marcarDiaLido}
-                    className="mt-6 w-full rounded-lg bg-gradient-to-r from-blue-500 to-[#0082b5] py-3 font-bold text-white hover:opacity-90 transition-opacity cursor-pointer"
+                    onClick={handleMarcarDiaLido}
+                    disabled={isDiaAtualJaLido()}
+                    className={`mt-6 w-full rounded-lg py-3 font-bold text-white transition-opacity cursor-pointer ${
+                        isDiaAtualJaLido()
+                            ? 'bg-green-500 opacity-75 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-blue-500 to-[#0082b5] hover:opacity-90'
+                    }`}
                 >
-                    ✓ Marcar Dia como Lido
+                    {isDiaAtualJaLido() ? '✓ Dia Atual Já foi Lido' : '✓ Marcar Dia como Lido'}
                 </button>
             </motion.div>
         </div>

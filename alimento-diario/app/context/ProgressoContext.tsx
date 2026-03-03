@@ -7,6 +7,7 @@ import { useAuth } from './AuthContext';
 type ProgressoContextType = {
     diasLidosEspecificos: number[];
     recarregarDados: () => Promise<void>;
+    marcarDiaComoLido: (diaDoAno?: number) => Promise<boolean>;
     loading: boolean;
 };
 
@@ -34,12 +35,49 @@ export function ProgressoProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const marcarDiaComoLido = async (diaDoAno?: number): Promise<boolean> => {
+        if (!user) return false;
+
+        try {
+            const body: any = { userId: user.id };
+            if (diaDoAno) {
+                body.diaEspecifico = diaDoAno;
+            }
+
+            const res = await fetch('/api/progresso/marcar-dia', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-user-id': user.id 
+                },
+                body: JSON.stringify(body),
+            });
+            
+            const data = await res.json();
+            
+            if (data.sucesso) {
+                // Recarregar dados do progresso
+                await recarregarDados();
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Erro ao marcar dia:', error);
+            return false;
+        }
+    };
+
     useEffect(() => {
         recarregarDados();
     }, [user]);
 
     return (
-        <ProgressoContext.Provider value={{ diasLidosEspecificos, recarregarDados, loading }}>
+        <ProgressoContext.Provider value={{ 
+            diasLidosEspecificos, 
+            recarregarDados, 
+            marcarDiaComoLido,
+            loading 
+        }}>
             {children}
         </ProgressoContext.Provider>
     );
