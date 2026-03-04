@@ -1,12 +1,14 @@
-'use client';
+﻿'use client';
 
 import { motion } from "framer-motion";
-import { Calendar, BookOpen, FileText, Clock } from "lucide-react";
+import { Calendar, BookOpen, Clock, Share2 } from "lucide-react";
 import { plano2026 } from '@/data/plano';
 import { useAuth } from '@/app/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function LeituraDeHoje() {
     const { user } = useAuth();
+    const router = useRouter();
 
     // Calcular o dia atual do ano
     const hoje = new Date();
@@ -23,6 +25,13 @@ export default function LeituraDeHoje() {
         month: 'long',
         year: 'numeric'
     });
+
+    const compartilharLeitura = () => {
+        if (leituraDoDia?.leitura) {
+            const referenciaEncoded = encodeURIComponent(leituraDoDia.leitura);
+            router.push(`/pages/comunidade?ref=${referenciaEncoded}`);
+        }
+    };
 
     if (!user) {
         return (
@@ -50,7 +59,7 @@ export default function LeituraDeHoje() {
                     className="relative overflow-hidden rounded-2xl border border-[#006eb3] bg-white p-6 sm:p-8 w-full max-w-4xl shadow-lg text-center"
                 >
                     <h2 className="text-2xl font-bold mb-4">Leitura de Hoje</h2>
-                    <p className="text-gray-600">Não há leitura programada para hoje</p>
+                    <p className="text-gray-600">Plano de leitura não encontrado para hoje</p>
                 </motion.div>
             </div>
         );
@@ -65,58 +74,56 @@ export default function LeituraDeHoje() {
                 className="relative overflow-hidden rounded-2xl border border-[#006eb3] bg-white p-6 sm:p-8 w-full max-w-4xl shadow-lg"
             >
                 {/* Header */}
-                <div className="mb-6 flex items-center gap-3">
-                    <Calendar className="h-8 w-8 text-[#0082b5]" />
-                    <div>
-                        <h2 className="text-2xl font-bold">Leitura de Hoje</h2>
-                        <p className="text-gray-600">Dia {diaAtualDoAno} • {dataFormatada}</p>
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                        <Calendar className="h-6 w-6 text-[#006eb3]" />
+                        <div>
+                            <h2 className="text-2xl font-bold text-gray-800">Leitura de Hoje</h2>
+                            <p className="text-sm text-gray-600">{dataFormatada}</p>
+                        </div>
+                    </div>
+                    <div className="text-right">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#006eb3] text-white">
+                            Dia {diaAtualDoAno}
+                        </span>
                     </div>
                 </div>
 
-                {/* Leitura do Dia */}
-                <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="rounded-xl bg-[#13b0ed30] p-4 border border-[#13b0ed50]"
-                >
-                    <div className="flex items-start gap-3">
-                        <div className="rounded-full bg-[#0082b5] p-2">
-                            <BookOpen className="h-4 w-4 text-white" />
-                        </div>
-
+                {/* Conteúdo da leitura */}
+                <div className="space-y-4">
+                    <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-lg">
+                        <BookOpen className="h-5 w-5 text-[#006eb3] mt-0.5" />
                         <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className="text-xs font-semibold uppercase tracking-wide text-[#0082b5]">
-                                    Leitura Diária
-                                </span>
-                            </div>
-
-                            <h3 className="font-bold text-lg text-gray-800">
-                                {leituraDoDia.leitura}
-                            </h3>
-
-                            <p className="text-gray-600 text-sm mt-1">
-                                Plano de Leitura Bíblica Anual
-                            </p>
-                        </div>
-
-                        <div className="text-right">
-                            <FileText className="h-5 w-5 text-[#0082b5]" />
+                            <h3 className="font-semibold text-gray-800 mb-1">Leitura Bíblica</h3>
+                            <p className="text-gray-700">{leituraDoDia.leitura}</p>
                         </div>
                     </div>
-                </motion.div>
 
-                {/* Footer com tempo estimado */}
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                    className="mt-6 flex items-center justify-center gap-2 text-gray-600"
-                >
-                    <Clock className="h-4 w-4" />
-                    <span className="text-sm">Tempo estimado: 15-20 minutos</span>
-                </motion.div>
+                    <div className="flex items-start gap-3 p-4 bg-orange-50 rounded-lg">
+                        <Clock className="h-5 w-5 text-orange-600 mt-0.5" />
+                        <div className="flex-1">
+                            <h3 className="font-semibold text-gray-800 mb-1">Tempo estimado de leitura</h3>
+                            <p className="text-gray-700">10-15 minutos</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Botões de ação */}
+                <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
+                    <motion.button
+                        onClick={compartilharLeitura}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                        <Share2 size={16} />
+                        Compartilhar na Comunidade
+                    </motion.button>
+                    
+                    <p className="text-sm text-gray-500">
+                        Marque quando concluir sua leitura
+                    </p>
+                </div>
             </motion.div>
         </div>
     );

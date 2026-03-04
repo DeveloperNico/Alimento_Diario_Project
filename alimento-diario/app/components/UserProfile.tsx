@@ -129,15 +129,15 @@ export default function UserProfile() {
                     <div className="py-1">
                         <button
                             onClick={handleEditProfile}
-                            className="flex items-center gap-3 w-full px-4 py-3 hover:bg-gray-50 transition-colors text-left"
+                            className="flex items-center gap-3 w-full px-4 py-3 hover:bg-gray-50 transition-colors text-left cursor-pointer"
                         >
                             <Settings className="w-5 h-5 text-gray-500" />
-                            <span className="text-gray-700">Editar perfil</span>
+                            <span className="text-gray-700">Minha conta</span>
                         </button>
                         
                         <button
                             onClick={handleLogout}
-                            className="flex items-center gap-3 w-full px-4 py-3 hover:bg-red-50 transition-colors text-left text-red-600"
+                            className="flex items-center gap-3 w-full px-4 py-3 hover:bg-red-50 transition-colors text-left text-red-600 cursor-pointer"
                         >
                             <LogOut className="w-5 h-5" />
                             <span>Sair da conta</span>
@@ -154,7 +154,7 @@ export default function UserProfile() {
             <button
                 ref={buttonRef}
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="cursor-pointer flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
                 {/* Foto/Avatar */}
                 <div className="relative w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">

@@ -1,17 +1,29 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Camera, Save, X, Calendar, BookOpen, Target } from 'lucide-react';
+import { Camera, Save, X, Calendar, BookOpen, Target, Heart, MessageCircle } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Header from '@/app/components/Header';
 
 type UserStats = {
     diasLidos: number;
     diasRestantes: number;
     percentual: number;
     diasLidosEspecificos: number[];
+};
+
+type Post = {
+    id: string;
+    userId: string;
+    userName: string;
+    referencia: string;
+    conteudo: string;
+    dataPublicacao: string;
+    curtidas: number;
+    comentarios: number;
 };
 
 export default function PerfilPage() {
@@ -21,6 +33,8 @@ export default function PerfilPage() {
     const [stats, setStats] = useState<UserStats | null>(null);
     const [editingName, setEditingName] = useState(false);
     const [newName, setNewName] = useState('');
+    const [userPosts, setUserPosts] = useState<Post[]>([]);
+    const [loadingPosts, setLoadingPosts] = useState(true);
 
     useEffect(() => {
         if (!user) {
@@ -30,6 +44,7 @@ export default function PerfilPage() {
 
         setNewName(user.nome);
         fetchStats();
+        fetchUserPosts();
     }, [user, router]);
 
     const fetchStats = async () => {
@@ -44,56 +59,69 @@ export default function PerfilPage() {
         }
     };
 
+    const fetchUserPosts = async () => {
+        if (!user) return;
+
+        try {
+            const res = await fetch(`/api/posts/usuario?userId=${user.id}`);
+            if (res.ok) {
+                const data = await res.json();
+                setUserPosts(data);
+            }
+        } catch (error) {
+            console.error('Erro ao buscar posts do usuário:', error);
+        } finally {
+            setLoadingPosts(false);
+        }
+    };
+
     const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file || !user) return;
 
+        const formData = new FormData();
+        formData.append('photo', file);
+
         setLoading(true);
-
         try {
-            const formData = new FormData();
-            formData.append('foto', file);
-            formData.append('userId', user.id);
-
-            const response = await fetch('/api/user/upload-photo', {
+            const res = await fetch('/api/user/upload-photo', {
                 method: 'POST',
+                headers: {
+                    'x-user-id': user.id,
+                },
                 body: formData,
             });
 
-            const data = await response.json();
-
-            if (data.success) {
-                updateUser({ fotoPerfil: data.fotoUrl });
+            if (res.ok) {
+                const data = await res.json();
+                updateUser({ ...user, fotoPerfil: data.fotoUrl });
             }
         } catch (error) {
-            console.error('Erro ao fazer upload:', error);
+            console.error('Erro ao fazer upload da foto:', error);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleSaveName = async () => {
+    const handleNameSave = async () => {
         if (!user || newName.trim() === user.nome) {
             setEditingName(false);
             return;
         }
 
         setLoading(true);
-
         try {
-            const response = await fetch('/api/user/update-profile', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId: user.id,
-                    nome: newName.trim(),
-                }),
+            const res = await fetch('/api/user/update-profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-user-id': user.id,
+                },
+                body: JSON.stringify({ nome: newName.trim() }),
             });
 
-            const data = await response.json();
-
-            if (data.success) {
-                updateUser({ nome: newName.trim() });
+            if (res.ok) {
+                updateUser({ ...user, nome: newName.trim() });
                 setEditingName(false);
             }
         } catch (error) {
@@ -103,192 +131,216 @@ export default function PerfilPage() {
         }
     };
 
-    const getInitials = (name: string) => {
-        return name
-            .split(' ')
-            .map(word => word[0])
-            .join('')
-            .toUpperCase()
-            .substring(0, 2);
+    const formatarData = (dataString: string) => {
+        const data = new Date(dataString);
+        return data.toLocaleDateString('pt-BR') + ' às ' + data.toLocaleTimeString('pt-BR', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
     };
 
     if (!user) return null;
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Header da página */}
-            <div className="bg-white shadow-sm">
-                <div className="max-w-4xl mx-auto px-4 py-6">
-                    <button
-                        onClick={() => router.back()}
-                        className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-4"
-                    >
-                        <X className="w-5 h-5" />
-                        <span>Voltar</span>
-                    </button>
-
-                    <h1 className="text-3xl font-bold text-gray-800">Meu Perfil</h1>
-                </div>
-            </div>
-
-            <div className="max-w-4xl mx-auto px-4 py-8">
-                {/* Card principal do perfil */}
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+            <Header />
+            <div className="container mx-auto px-4 py-8">
+                {/* Header do Perfil */}
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8"
+                    className="bg-white rounded-xl shadow-lg p-6 mb-8"
                 >
-                    {/* Banner do perfil */}
-                    <div className="h-48 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 relative">
-                        <div className="absolute bottom-6 left-6 flex items-end gap-4">
-                            {/* Foto do perfil */}
-                            <div className="relative">
-                                <div className="w-32 h-32 rounded-full border-4 border-white overflow-hidden bg-white shadow-lg">
-                                    {user.fotoPerfil ? (
-                                        <Image
-                                            src={user.fotoPerfil}
-                                            alt={user.nome}
-                                            fill
-                                            className="object-cover"
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-2xl font-bold">
-                                            {getInitials(user.nome)}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Botão para trocar foto */}
-                                <label className="absolute bottom-2 right-2 bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full cursor-pointer shadow-lg transition-colors">
-                                    <Camera className="w-4 h-4" />
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleImageUpload}
-                                        className="hidden"
-                                        disabled={loading}
+                    <div className="flex items-center gap-6">
+                        {/* Foto do Perfil */}
+                        <div className="relative">
+                            <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200">
+                                {user.fotoPerfil ? (
+                                    <Image
+                                        src={user.fotoPerfil}
+                                        alt="Foto do perfil"
+                                        width={96}
+                                        height={96}
+                                        className="w-full h-full object-cover"
                                     />
-                                </label>
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                        <Camera size={32} />
+                                    </div>
+                                )}
                             </div>
+                            <input
+                                type="file"
+                                id="photo"
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                                className="hidden"
+                            />
+                            <label
+                                htmlFor="photo"
+                                className="absolute -bottom-1 -right-1 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 transition-colors"
+                            >
+                                <Camera size={16} />
+                            </label>
+                        </div>
 
-                            {/* Info do usuário */}
-                            <div className="pb-4">
-                                <div className="flex items-center gap-2 mb-2">
-                                    {editingName ? (
-                                        <div className="flex items-center gap-2">
-                                            <input
-                                                type="text"
-                                                value={newName}
-                                                onChange={(e) => setNewName(e.target.value)}
-                                                className="bg-white/90 backdrop-blur-sm text-gray-800 text-2xl font-bold px-3 py-1 rounded-lg border-2 border-blue-300 focus:outline-none focus:border-blue-500"
-                                                onKeyPress={(e) => e.key === 'Enter' && handleSaveName()}
-                                                autoFocus
-                                            />
-                                            <button
-                                                onClick={handleSaveName}
-                                                disabled={loading}
-                                                className="bg-green-500 hover:bg-green-600 text-white p-1 rounded-md disabled:opacity-50"
-                                            >
-                                                <Save className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    setEditingName(false);
-                                                    setNewName(user.nome);
-                                                }}
-                                                className="bg-red-500 hover:bg-red-600 text-white p-1 rounded-md"
-                                            >
-                                                <X className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    ) : (
+                        {/* Informações do Usuário */}
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                                {editingName ? (
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="text"
+                                            value={newName}
+                                            onChange={(e) => setNewName(e.target.value)}
+                                            className="text-2xl font-bold bg-transparent border-b-2 border-blue-500 focus:outline-none"
+                                        />
                                         <button
-                                            onClick={() => setEditingName(true)}
-                                            className="bg-white/90 backdrop-blur-sm text-gray-800 text-2xl font-bold px-3 py-1 rounded-lg hover:bg-white transition-colors"
+                                            onClick={handleNameSave}
+                                            disabled={loading}
+                                            className="text-green-600 hover:text-green-700"
                                         >
-                                            {user.nome}
+                                            <Save size={20} />
                                         </button>
-                                    )}
-                                </div>
-                                <p className="text-white/90 text-sm bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full inline-block">
-                                    {user.email}
-                                </p>
+                                        <button
+                                            onClick={() => {
+                                                setEditingName(false);
+                                                setNewName(user.nome);
+                                            }}
+                                            className="text-red-600 hover:text-red-700"
+                                        >
+                                            <X size={20} />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <h1
+                                        onClick={() => setEditingName(true)}
+                                        className="text-2xl font-bold text-gray-800 cursor-pointer hover:text-blue-600"
+                                    >
+                                        {user.nome}
+                                    </h1>
+                                )}
                             </div>
+                            <p className="text-gray-600">Usuário ativo na plataforma</p>
                         </div>
                     </div>
-
-                    {/* Estatísticas */}
-                    {stats && (
-                        <div className="p-6">
-                            <h3 className="text-xl font-bold text-gray-800 mb-4">Meu Progresso</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="bg-green-50 p-4 rounded-xl">
-                                    <div className="flex items-center gap-3">
-                                        <BookOpen className="w-8 h-8 text-green-600" />
-                                        <div>
-                                            <p className="text-2xl font-bold text-green-700">{stats.diasLidos}</p>
-                                            <p className="text-green-600 text-sm">Dias lidos</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-blue-50 p-4 rounded-xl">
-                                    <div className="flex items-center gap-3">
-                                        <Target className="w-8 h-8 text-blue-600" />
-                                        <div>
-                                            <p className="text-2xl font-bold text-blue-700">{stats.percentual}%</p>
-                                            <p className="text-blue-600 text-sm">Progresso</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-orange-50 p-4 rounded-xl">
-                                    <div className="flex items-center gap-3">
-                                        <Calendar className="w-8 h-8 text-orange-600" />
-                                        <div>
-                                            <p className="text-2xl font-bold text-orange-700">{stats.diasRestantes}</p>
-                                            <p className="text-orange-600 text-sm">Dias restantes</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
                 </motion.div>
 
-                {/* Seção de atividade recente */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="bg-white rounded-2xl shadow-lg p-6"
-                >
-                    <h3 className="text-xl font-bold text-gray-800 mb-4">Atividade Recente</h3>
-
-                    {stats?.diasLidosEspecificos && stats.diasLidosEspecificos.length > 0 ? (
-                        <div className="space-y-3">
-                            {stats.diasLidosEspecificos
-                                .slice(-10) // Últimos 10 dias
-                                .reverse() // Mais recentes primeiro
-                                .map((dia, index) => (
-                                    <div key={dia} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                {/* Layout de Duas Colunas */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Coluna da Esquerda - Atividades Recentes (1/3 da largura) */}
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="lg:col-span-1"
+                    >
+                        <div className="bg-white rounded-xl shadow-lg p-6">
+                            <h2 className="text-xl font-bold text-gray-800 mb-4">Atividades Recentes</h2>
+                            
+                            {stats && (
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                                        <Calendar className="h-5 w-5 text-blue-600" />
                                         <div>
-                                            <p className="font-semibold text-gray-800">Dia {dia} concluído</p>
-                                            <p className="text-sm text-gray-500">Leitura bíblica finalizada</p>
+                                            <p className="font-medium text-gray-800">Dias Lidos</p>
+                                            <p className="text-sm text-gray-600">{stats.diasLidos} de 365 dias</p>
                                         </div>
                                     </div>
-                                ))
-                            }
+
+                                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                                        <BookOpen className="h-5 w-5 text-green-600" />
+                                        <div>
+                                            <p className="font-medium text-gray-800">Progresso</p>
+                                            <p className="text-sm text-gray-600">{stats.percentual.toFixed(1)}% concluído</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg">
+                                        <Target className="h-5 w-5 text-orange-600" />
+                                        <div>
+                                            <p className="font-medium text-gray-800">Meta</p>
+                                            <p className="text-sm text-gray-600">Ler a Bíblia em 1 ano</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Posts Publicados */}
+                                    <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
+                                        <MessageCircle className="h-5 w-5 text-purple-600" />
+                                        <div>
+                                            <p className="font-medium text-gray-800">Posts Publicados</p>
+                                            <p className="text-sm text-gray-600">{userPosts.length} reflexões compartilhadas</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                    ) : (
-                        <div className="text-center py-8">
-                            <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                            <p className="text-gray-500">Nenhuma atividade ainda</p>
-                            <p className="text-sm text-gray-400">Comece a marcar seus dias de leitura!</p>
+                    </motion.div>
+
+                    {/* Coluna da Direita - Meus Posts (2/3 da largura) */}
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="lg:col-span-2"
+                    >
+                        <div className="bg-white rounded-xl shadow-lg p-6">
+                            <h2 className="text-xl font-bold text-gray-800 mb-6">Meus Posts</h2>
+                            
+                            {loadingPosts ? (
+                                <div className="text-center py-8">
+                                    <p className="text-gray-600">Carregando seus posts...</p>
+                                </div>
+                            ) : userPosts.length === 0 ? (
+                                <div className="text-center py-8">
+                                    <p className="text-gray-600 mb-4">Você ainda não publicou nenhum post.</p>
+                                    <button
+                                        onClick={() => router.push('/pages/comunidade')}
+                                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                                    >
+                                        Publicar Agora
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {userPosts.map((post) => (
+                                        <motion.div
+                                            key={post.id}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                                        >
+                                            {/* Header do Post */}
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                                                    {post.referencia}
+                                                </div>
+                                                <span className="text-sm text-gray-500">
+                                                    {formatarData(post.dataPublicacao)}
+                                                </span>
+                                            </div>
+
+                                            {/* Conteúdo */}
+                                            <p className="text-gray-700 mb-3 leading-relaxed">
+                                                {post.conteudo}
+                                            </p>
+
+                                            {/* Estatísticas */}
+                                            <div className="flex items-center gap-4 text-sm text-gray-500">
+                                                <div className="flex items-center gap-1">
+                                                    <Heart size={14} />
+                                                    <span>{post.curtidas || 0} curtidas</span>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <MessageCircle size={14} />
+                                                    <span>{post.comentarios || 0} comentários</span>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
-                    )}
-                </motion.div>
+                    </motion.div>
+                </div>
             </div>
         </div>
     );

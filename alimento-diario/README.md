@@ -1,36 +1,210 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🕊️ Alimento Diário 
 
-## Getting Started
+![Next.js](https://img.shields.io/badge/Next.js-14-000000?logo=nextdotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3-38B2AC?logo=tailwind-css&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?logo=prisma&logoColor=white)
+---
 
-First, run the development server:
+# 🇧🇷 Português
+
+## 📖 Sobre o Projeto
+
+O **Bible Connect** é uma plataforma de estudo bíblico desenvolvida com **Next.js e TypeScript**, que utiliza **Inteligência Artificial** para auxiliar usuários na compreensão das Escrituras.
+
+A aplicação permite que o usuário faça perguntas sobre a Bíblia, receba explicações, reflexões e conexões entre versículos de forma clara, organizada e acessível.
+
+> Tecnologia a serviço da fé e do conhecimento.
+
+---
+
+## ✨ Funcionalidades
+
+- 📖 Busca e consulta de versículos  
+- 🤖 Respostas e explicações geradas por IA  
+- 💬 Interface de chat interativa  
+- 📚 Organização de conteúdos bíblicos  
+- 📱 Design moderno e responsivo  
+- 🔐 Persistência de dados com banco de dados via Prisma  
+
+---
+
+## 🛠️ Tecnologias Utilizadas
+
+### Frontend & Backend (Fullstack com Next.js)
+
+- Next.js
+- TypeScript
+- Tailwind CSS
+- Prisma ORM
+- Banco de Dados (SQLite ou PostgreSQL)
+
+---
+
+## 📦 Pré-requisitos
+
+- Node.js 18+
+- npm ou yarn
+- Git
+
+---
+
+## 🚀 Instalação
+
+### Clonar repositório
+
+```bash
+git clone <url-do-repositorio>
+cd Bible_Connect
+```
+
+---
+
+### Instalar dependências
+
+```bash
+npm install
+```
+
+---
+
+### Configurar variáveis de ambiente
+
+Criar arquivo `.env` na raiz do projeto:
+
+```
+DATABASE_URL="file:./dev.db"
+```
+
+---
+
+### Rodar migrações do Prisma
+
+```bash
+npx prisma migrate dev
+```
+
+---
+
+### Iniciar aplicação
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Aplicação disponível em:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## ⚠️ Avisos Importantes
 
-To learn more about Next.js, take a look at the following resources:
+Este assistente:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+❌ Não substitui líderes religiosos ou teólogos  
+❌ Não representa uma denominação específica  
+❌ Fornece interpretações com base em Inteligência Artificial  
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Recomenda-se sempre consultar líderes espirituais ou fontes teológicas confiáveis.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# 👨‍💻 Desenvolvedor
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Desenvolvido por **DeveloperNico** ✝️  
+Projeto focado em **IA + estudo bíblico + desenvolvimento fullstack moderno**.
+
+---
+
+# 🇺🇸 English
+
+## 📖 About the Project
+
+**Bible Connect** is a Bible study platform built with **Next.js and TypeScript**, powered by **Artificial Intelligence** to help users better understand Scripture.
+
+Users can ask questions about biblical passages and receive explanations, reflections, and contextual insights in a clear and accessible way.
+
+> Technology serving faith and knowledge.
+
+---
+
+## ✨ Features
+
+- 📖 Bible verse search  
+- 🤖 AI-generated explanations and reflections  
+- 💬 Interactive chat interface  
+- 📚 Structured biblical content  
+- 📱 Modern and responsive UI  
+- 🔐 Database persistence with Prisma ORM  
+
+---
+
+## 🛠️ Tech Stack
+
+- Next.js
+- TypeScript
+- Tailwind CSS
+- Prisma ORM
+- SQLite or PostgreSQL
+
+---
+
+## 📦 Requirements
+
+- Node.js 18+
+- npm or yarn
+- Git
+
+---
+
+## 🚀 Installation
+
+### Clone repository
+
+```bash
+git clone <repository-url>
+cd Bible_Connect
+```
+
+---
+
+### Install dependencies
+
+```bash
+npm install
+```
+
+---
+
+### Configure environment variables
+
+Create a `.env` file:
+
+```
+DATABASE_URL="file:./dev.db"
+```
+
+---
+
+### Run Prisma migrations
+
+```bash
+npx prisma migrate dev
+```
+
+---
+
+### Start development server
+
+```bash
+npm run dev
+```
+
+Application available at:
+
+```
+http://localhost:3000
+```

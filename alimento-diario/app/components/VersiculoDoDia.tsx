@@ -1,8 +1,9 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { motion } from "framer-motion";
-import { Quote } from "lucide-react";
+import { Quote, Share2 } from "lucide-react";
+import { useRouter } from 'next/navigation';
 
 type Versiculo = {
     referencia: string;
@@ -13,6 +14,7 @@ export default function VersiculoDoDia() {
     const [versiculo, setVersiculo] = useState<Versiculo | null>(null);
     const [loading, setLoading] = useState(true);
     const [erro, setErro] = useState('');
+    const router = useRouter();
 
     useEffect(() => {
         async function fetchVersiculo() {
@@ -34,6 +36,13 @@ export default function VersiculoDoDia() {
         fetchVersiculo();
     }, []);
 
+    const compartilharVersiculo = () => {
+        if (versiculo) {
+            const referenciaEncoded = encodeURIComponent(versiculo.referencia);
+            router.push(`/pages/comunidade?ref=${referenciaEncoded}`);
+        }
+    };
+
     if (loading) return <div>Carregando versículo do dia...</div>;
     if (erro) return <div>Erro: {erro}</div>;
     if (!versiculo) return <div>Nenhum versículo encontrado.</div>;
@@ -54,7 +63,20 @@ export default function VersiculoDoDia() {
                     <blockquote className="my-4 font-serif text-xl leading-relaxed text-foreground">
                         "{versiculo.texto}"
                     </blockquote>
-                    <p className="text-sm font-poppins font-medium text-primary">— {versiculo.referencia}</p>
+                    <div className="flex items-center justify-between">
+                        <p className="text-sm font-poppins font-medium text-primary"> {versiculo.referencia}</p>
+                        
+                        {/* Botão Compartilhar */}
+                        <motion.button
+                            onClick={compartilharVersiculo}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium cursor-pointer"
+                        >
+                            <Share2 size={16} />
+                            Compartilhar
+                        </motion.button>
+                    </div>
                 </div>
             </motion.div>
         </div>

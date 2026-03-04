@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Image from "next/image";
 import Link from "next/link";
@@ -14,7 +14,7 @@ export default function Header() {
     const links = [
         { href: "/", label: "Início", id: "home" },
         { href: "/pages/cronograma", label: "Cronograma", id: "cronograma" },
-        { href: "/comunidade", label: "Comunidade", id: "comunidade" },
+        { href: "/pages/comunidade", label: "Comunidade", id: "comunidade" },
     ];
 
     const renderIcon = (id: string) => {
@@ -35,15 +35,17 @@ export default function Header() {
             <div className="absolute -top-20 -right-42 w-[800px] h-[300px] bg-[radial-gradient(circle_at_center,_#9fddf5_0%,_transparent_70%)] opacity-40 blur-3xl pointer-events-none" />
             <div className="flex items-center justify-between px-5 py-2">
                 <div className="flex items-center gap-3">
-                    <Image
-                        src="/logo_alimento_diario.png"
-                        alt="Logo Alimento Diário"
-                        width={80}
-                        height={80}
-                    />
-                    <h1 className="font-poppins text-xl font-bold">
-                        Alimento Diário
-                    </h1>
+                    <Link href="/" className="flex items-center gap-3">
+                        <Image
+                            src="/logo_alimento_diario.png"
+                            alt="Logo Alimento Diário"
+                            width={80}
+                            height={80}
+                        />
+                        <h1 className="font-poppins text-xl font-bold cursor-pointer">
+                            Alimento Diário
+                        </h1>
+                    </Link>
                 </div>
 
                 <div className="flex items-center gap-6">
